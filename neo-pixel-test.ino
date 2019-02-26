@@ -1,4 +1,4 @@
-* neo pixel test on M5stack Fire */
+/* neo pixel test on M5stack Fire */
 /* Just scroll the leds set to green */
 
 #include <Adafruit_NeoPixel.h>
@@ -24,6 +24,6 @@ int ctr=0;
       pixels.setPixelColor(ctr-1,pixels.Color(0,0,0));
     }     
     pixels.show();
-    delay(30);
+    delay(500);
   }
 }
