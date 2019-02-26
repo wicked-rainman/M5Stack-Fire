@@ -3,10 +3,10 @@
 
 #include <Adafruit_NeoPixel.h>
 
-#define M5STACK_FIRE_NEO_NUM_LEDS 10
-#define M5STACK_FIRE_NEO_DATA_PIN 15
+#define LED_COUNT 10
+#define NEO_PIN 15
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(M5STACK_FIRE_NEO_NUM_LEDS, M5STACK_FIRE_NEO_DATA_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
 
 void setup()
 {
