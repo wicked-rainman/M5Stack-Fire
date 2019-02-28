@@ -125,28 +125,28 @@ void display_network(int net) {
 }
 
 void do_scan() {
-int n,i,j,k,matched,stored_network_count=0;
-  display_networks_found(0);
+int n,i,j,k,m,matched;
+
+  display_networks_found(networks_found,RED);
   while(1) {
-    M5.update();
-    if(M5.BtnB.isPressed()) {
-      if(networks_found==0) {
-        M5.Lcd.clear();
-        draw_button_menu("   Scan",YELLOW);
-        M5.Lcd.setCursor(5,90);
-        M5.Lcd.setTextColor(RED);
-        M5.Lcd.print("No Networks found"); 
-        return;
+      M5.update();
+      if(M5.BtnB.isPressed()) {
+        if(networks_found==0) {
+          M5.Lcd.clear();
+          draw_button_menu("   Scan",YELLOW);
+          M5.Lcd.setCursor(5,90);
+          M5.Lcd.setTextColor(RED);
+          M5.Lcd.print("No Networks found"); 
+          return;
+        }
+        else {
+          networks_found--;
+          M5.Lcd.clear();
+          current_network = 0;
+          display_network(0);
+          return;
+        }
       }
-      else {
-        networks_found--;
-        M5.Lcd.clear();
-        draw_button_menu("   Scan    Scroll   +",YELLOW);
-        current_network = 0;
-        display_network(0);
-        return;
-      }
-    }
     else {
       n = WiFi.scanNetworks();
       if(n>0) {
@@ -179,9 +179,8 @@ int n,i,j,k,matched,stored_network_count=0;
               networks[networks_found].bssid_str,networks[networks_found].channel,
               networks[networks_found].ssid,networks[networks_found].rssi,
               networks[networks_found].encryption);
-            display_networks_found(networks_found);
+            display_networks_found(networks_found,RED);
             networks_found++;
-            stored_network_count = networks_found;
           }
         }
       }
@@ -221,7 +220,7 @@ void focus_on_network(char *bssid) {
     }
   }
 }
-void display_networks_found(int count) {
+void display_networks_found(int count, int colour) {
           M5.Lcd.clear();
           draw_button_menu("           Stop   ",RED);
           M5.Lcd.setTextSize(3);
@@ -231,7 +230,7 @@ void display_networks_found(int count) {
           M5.Lcd.drawLine(1,70,320,70,WHITE); 
           M5.Lcd.setCursor(120,130);
           M5.Lcd.setTextSize(5);
-          M5.Lcd.setTextColor(YELLOW);
+          M5.Lcd.setTextColor(colour);
           M5.Lcd.printf("%d",count);
           M5.Lcd.setTextSize(2);
 }
