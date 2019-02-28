@@ -1,10 +1,10 @@
 #include <WiFi.h>
 #include <M5Stack.h>
-#define MAX_NETWORKS 500
+#define MAX_NETWORKS 1000
 typedef struct {
     int channel;
-    char bssid_str[40];
-    char ssid[50];
+    char bssid_str[20];
+    char ssid[25];
     int rssi;
     int encryption;
     int network_number;
@@ -101,6 +101,7 @@ void display_network(int net) {
     }
     case 5: {
       M5.Lcd.printf("PEAP");
+      break;
     }
     case 8: {
       M5.Lcd.printf("WPA WPA2 PSK");
@@ -124,7 +125,7 @@ void display_network(int net) {
 }
 
 void do_scan() {
-int n,i,j,matched,stored_network_count=0;
+int n,i,j,k,matched,stored_network_count=0;
   display_networks_found(0);
   while(1) {
     M5.update();
@@ -165,7 +166,12 @@ int n,i,j,matched,stored_network_count=0;
             }
             strcpy(networks[networks_found].bssid_str, WiFi.BSSIDstr(i).c_str());
             networks[networks_found].channel = WiFi.channel(i);
-            strcpy(networks[networks_found].ssid, WiFi.SSID(i).c_str());
+            k=strlen(WiFi.SSID(i).c_str());
+            if(k>24) {
+              memcpy(networks[networks_found].ssid,WiFi.SSID(i).c_str(),24);
+              networks[networks_found].ssid[24]='\0';
+            }
+            else strcpy(networks[networks_found].ssid, WiFi.SSID(i).c_str());
             networks[networks_found].rssi = WiFi.RSSI(i); 
             networks[networks_found].encryption = WiFi.encryptionType(i);
             networks[networks_found].network_number=networks_found;
