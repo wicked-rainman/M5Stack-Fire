@@ -1,10 +1,10 @@
 #include <WiFi.h>
 #include <M5Stack.h>
-#define MAX_NETWORKS 500
+#define MAX_NETWORKS 1000
 typedef struct {
     int channel;
-    char bssid_str[40];
-    char ssid[50];
+    char bssid_str[20];
+    char ssid[26];
     int rssi;
     int encryption;
     int network_number;
@@ -80,7 +80,7 @@ void display_network(int net) {
   M5.Lcd.setCursor(5,50);
   M5.Lcd.printf("Chan: %d",networks[current_network].channel);
   M5.Lcd.setCursor(5,70);
-  M5.Lcd.printf("Rssi: %d",networks[current_network].rssi);
+  M5.Lcd.printf("Rssi: %d",networks[current_network].rssi+100);
   M5.Lcd.setCursor(5,90);
   switch (networks[current_network].encryption) {
     case 1: {
@@ -96,11 +96,12 @@ void display_network(int net) {
       break;
     }
     case 4: {
-      M5.Lcd.printf("WPA2 PSK Mixed CCMP");
+      M5.Lcd.printf("WPA2 PSK M CCMP");
       break;
     }
     case 5: {
       M5.Lcd.printf("PEAP");
+      break;
     }
     case 8: {
       M5.Lcd.printf("WPA WPA2 PSK");
@@ -124,7 +125,7 @@ void display_network(int net) {
 }
 
 void do_scan() {
-int n,i,j,matched,stored_network_count=0;
+int n,i,j,k,matched,stored_network_count=0;
   display_networks_found(0);
   while(1) {
     M5.update();
@@ -138,7 +139,6 @@ int n,i,j,matched,stored_network_count=0;
         return;
       }
       else {
-        networks_found--;
         M5.Lcd.clear();
         draw_button_menu("   Scan    Scroll   +",YELLOW);
         current_network = 0;
@@ -165,14 +165,22 @@ int n,i,j,matched,stored_network_count=0;
             }
             strcpy(networks[networks_found].bssid_str, WiFi.BSSIDstr(i).c_str());
             networks[networks_found].channel = WiFi.channel(i);
-            strcpy(networks[networks_found].ssid, WiFi.SSID(i).c_str());
+            k=strlen(WiFi.SSID(i).c_str());
+            if(k>23) {
+              memcpy(networks[networks_found].ssid, WiFi.SSID(i).c_str(),23);
+              networks[networks_found].ssid[24]='\0';
+            }
+            else strcpy(networks[networks_found].ssid, WiFi.SSID(i).c_str());
             networks[networks_found].rssi = WiFi.RSSI(i); 
             networks[networks_found].encryption = WiFi.encryptionType(i);
             networks[networks_found].network_number=networks_found;
-            Serial.printf("%d:\t%s %d %s %d %d\n",networks[networks_found].network_number, 
-              networks[networks_found].bssid_str,networks[networks_found].channel,
-              networks[networks_found].ssid,networks[networks_found].rssi,
-              networks[networks_found].encryption);
+            Serial.printf("%d:\t%s\tChan:%d\tRSSI:%d\tEncr:%d\t%s\n",
+              networks[networks_found].network_number, 
+              networks[networks_found].bssid_str,
+              networks[networks_found].channel,
+              networks[networks_found].rssi,
+              networks[networks_found].encryption,
+              networks[networks_found].ssid);
             display_networks_found(networks_found);
             networks_found++;
             stored_network_count = networks_found;
@@ -203,11 +211,12 @@ void focus_on_network(char *bssid) {
             M5.Lcd.setCursor(5, 10);
             M5.Lcd.printf("%s",networks[current_network].bssid_str);
             M5.Lcd.setCursor(5,30);
+            M5.Lcd.setTextColor(YELLOW);
             M5.Lcd.printf("%s",networks[current_network].ssid);
-            M5.Lcd.setCursor(100,100);
+            M5.Lcd.setCursor(130,100);
             M5.Lcd.setTextColor(WHITE);
             M5.Lcd.setTextSize(4);
-            M5.Lcd.printf("%d", WiFi.RSSI(i));
+            M5.Lcd.printf("%d", WiFi.RSSI(i)+100);
             M5.Lcd.setTextSize(2);
           }
         }
