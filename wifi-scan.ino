@@ -96,7 +96,7 @@ void display_network(int net) {
       break;
     }
     case 4: {
-      M5.Lcd.printf("WPA2 PSK M CCMP");
+      M5.Lcd.printf("WPA2 PSK Mixed CCMP");
       break;
     }
     case 5: {
