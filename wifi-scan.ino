@@ -158,10 +158,11 @@ int n,i,j,k,m,matched;
             if(strcmp(WiFi.BSSIDstr(i).c_str() , networks[j].bssid_str) == 0) {
               matched=1;
               break;
-            }
+            }   
           }
           if(matched==0) {
             if(networks_found == MAX_NETWORKS-1) {
+              if(logfile) logfile.close();
               current_network=0;
               display_network(current_network);
               return;
