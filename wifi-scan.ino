@@ -1,6 +1,6 @@
 #include <WiFi.h>
 #include <M5Stack.h>
-#define MAX_NETWORKS 1000
+#define MAX_NETWORKS 1300
 typedef struct {
     int channel;
     char bssid_str[20];
