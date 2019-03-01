@@ -10,7 +10,7 @@ typedef struct {
     int network_number;
 } network;
 network networks[MAX_NETWORKS];
-
+char outfile[]="/networks.txt";
 int scan;
 int networks_found;
 int current_network;
@@ -128,10 +128,11 @@ void display_network(int net) {
 
 void do_scan() {
 int n,i,j,k,m,matched;
-
+  File logfile=SD.open(outfile,FILE_WRITE);
   display_networks_found(networks_found,WHITE);
   while(1) {
       if(stopB_button()) {
+        if(logfile) logfile.close();
         if(networks_found==0) {
           M5.Lcd.clear();
           draw_button_menu("   Scan",YELLOW);
@@ -180,6 +181,12 @@ int n,i,j,k,m,matched;
               networks[networks_found].bssid_str,networks[networks_found].channel,
               networks[networks_found].ssid,networks[networks_found].rssi,
               networks[networks_found].encryption);
+            if(logfile) {
+              logfile.printf("%d,%s,%d,%s,%d,%d\n",networks[networks_found].network_number, 
+              networks[networks_found].bssid_str,networks[networks_found].channel,
+              networks[networks_found].ssid,networks[networks_found].rssi,
+              networks[networks_found].encryption);
+            }
             display_networks_found(networks_found,WHITE);
             networks_found++;
           }
