@@ -211,7 +211,7 @@ void focus_on_network(char *bssid) {
             M5.Lcd.printf("%s",networks[current_network].ssid);
             M5.Lcd.setCursor(125,100);
             M5.Lcd.setTextColor(WHITE);
-            M5.Lcd.setTextSize(4);
+            M5.Lcd.setTextSize(5);
             M5.Lcd.printf("%d", WiFi.RSSI(i)+100);
             M5.Lcd.setTextSize(2);
           }
@@ -238,9 +238,9 @@ int stopB_button() {
       M5.update();
       if(M5.BtnB.isPressed()) {
         M5.Lcd.clear();
-        M5.Lcd.setCursor(80,90);
+        M5.Lcd.setCursor(50,90);
         M5.Lcd.setTextColor(RED);
-        M5.Lcd.setTextSize(4);
+        M5.Lcd.setTextSize(5);
         M5.Lcd.print("STOPPED");
         M5.Lcd.setTextSize(2);
         while(M5.BtnB.isPressed()) M5.update();
