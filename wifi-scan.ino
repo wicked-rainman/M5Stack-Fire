@@ -48,10 +48,12 @@ void loop() {
     }
   }
   if(M5.BtnC.isPressed()) {
-    draw_button_menu("   Scan   Scroll    +",YELLOW);
     if(networks_found==0) {
+      M5.Lcd.setCursor(5,90);
       M5.Lcd.setTextColor(RED);
       M5.Lcd.print("No Networks found");
+      draw_button_menu("   Scan",YELLOW);
+
     }
     else {
       M5.Lcd.clear();
@@ -80,7 +82,7 @@ void display_network(int net) {
   M5.Lcd.printf("%s",networks[current_network].ssid);
   M5.Lcd.setCursor(5,50);
   M5.Lcd.setTextColor(GREEN);
-  M5.Lcd.printf("Chan: %d Rssi: %d",networks[current_network].channel,networks[current_network].rssi);
+  M5.Lcd.printf("Chan: %d Rssi: %d",networks[current_network].channel,networks[current_network].rssi+100);
   M5.Lcd.setCursor(5,70);
   switch (networks[current_network].encryption) {
     case 1: {
@@ -127,10 +129,9 @@ void display_network(int net) {
 void do_scan() {
 int n,i,j,k,m,matched;
 
-  display_networks_found(networks_found,RED);
+  display_networks_found(networks_found,WHITE);
   while(1) {
-      M5.update();
-      if(M5.BtnB.isPressed()) {
+      if(stopB_button()) {
         if(networks_found==0) {
           M5.Lcd.clear();
           draw_button_menu("   Scan",YELLOW);
@@ -143,7 +144,7 @@ int n,i,j,k,m,matched;
           networks_found--;
           M5.Lcd.clear();
           current_network = 0;
-          display_network(0);
+          display_network(current_network);
           return;
         }
       }
@@ -179,7 +180,7 @@ int n,i,j,k,m,matched;
               networks[networks_found].bssid_str,networks[networks_found].channel,
               networks[networks_found].ssid,networks[networks_found].rssi,
               networks[networks_found].encryption);
-            display_networks_found(networks_found,RED);
+            display_networks_found(networks_found,WHITE);
             networks_found++;
           }
         }
@@ -190,8 +191,7 @@ int n,i,j,k,m,matched;
 void focus_on_network(char *bssid) {
   int i,n;
   while(1) {
-    M5.update();
-    if(M5.BtnB.isPressed()) {
+    if(stopB_button()) {
         M5.Lcd.clear();
         draw_button_menu("   Scan    Scroll   +",YELLOW);
         display_network(current_network);
@@ -209,10 +209,10 @@ void focus_on_network(char *bssid) {
             M5.Lcd.printf("%s",networks[current_network].bssid_str);
             M5.Lcd.setCursor(5,30);
             M5.Lcd.printf("%s",networks[current_network].ssid);
-            M5.Lcd.setCursor(100,100);
+            M5.Lcd.setCursor(125,100);
             M5.Lcd.setTextColor(WHITE);
             M5.Lcd.setTextSize(4);
-            M5.Lcd.printf("%d", WiFi.RSSI(i));
+            M5.Lcd.printf("%d", WiFi.RSSI(i)+100);
             M5.Lcd.setTextSize(2);
           }
         }
@@ -233,4 +233,18 @@ void display_networks_found(int count, int colour) {
           M5.Lcd.setTextColor(colour);
           M5.Lcd.printf("%d",count);
           M5.Lcd.setTextSize(2);
+}
+int stopB_button() {
+      M5.update();
+      if(M5.BtnB.isPressed()) {
+        M5.Lcd.clear();
+        M5.Lcd.setCursor(80,90);
+        M5.Lcd.setTextColor(RED);
+        M5.Lcd.setTextSize(4);
+        M5.Lcd.print("STOPPED");
+        M5.Lcd.setTextSize(2);
+        while(M5.BtnB.isPressed()) M5.update();
+        return 1;
+      }
+      return 0;
 }
