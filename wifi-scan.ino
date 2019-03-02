@@ -230,7 +230,7 @@ int n,i,j,k,m,matched;
             if(logfile) {
               logfile.printf("%d,%s,%d,%s,%d,%d\n",networks[networks_found].network_number, 
               networks[networks_found].bssid_str,networks[networks_found].channel,
-              WiFi.SSID().c_str(),networks[networks_found].rssi,
+              WiFi.SSID(i).c_str(),networks[networks_found].rssi,
               networks[networks_found].encryption);
             }
             display_networks_found(network_total,WHITE);
