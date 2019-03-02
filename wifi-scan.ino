@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <M5Stack.h>
 #define MAX_NETWORKS 1300
+#define LOGFILE "/networks.txt"
 typedef struct {
     int channel;
     char bssid_str[20];
@@ -10,10 +11,11 @@ typedef struct {
     int network_number;
 } network;
 network networks[MAX_NETWORKS];
-char outfile[]="/networks.txt";
+char outfile[]=LOGFILE;
 int scan;
 int networks_found;
 int current_network;
+File logfile;
 
 void setup() {
   M5.begin();
@@ -23,12 +25,11 @@ void setup() {
   WiFi.disconnect();
   networks_found=0;
   current_network=0;
-  draw_button_menu("   Scan",YELLOW);
+  draw_button_menu("   Scan            Dump",YELLOW);
   delay(100);
 }
 
 void loop() {
-
   M5.update();
   if(M5.BtnA.isPressed()) {
     do_scan();
@@ -49,6 +50,8 @@ void loop() {
   }
   if(M5.BtnC.isPressed()) {
     if(networks_found==0) {
+      dump_log();
+      M5.Lcd.clear();    
       M5.Lcd.setCursor(5,90);
       M5.Lcd.setTextColor(RED);
       M5.Lcd.print("No Networks found");
@@ -128,11 +131,11 @@ void display_network(int net) {
 
 void do_scan() {
 int n,i,j,k,m,matched;
-  File logfile=SD.open(outfile,FILE_WRITE);
+  logfile=SD.open(outfile,FILE_APPEND);
   display_networks_found(networks_found,WHITE);
   while(1) {
       if(stopB_button()) {
-        if(logfile) logfile.close();
+        logfile.close();
         if(networks_found==0) {
           M5.Lcd.clear();
           draw_button_menu("   Scan",YELLOW);
@@ -161,12 +164,7 @@ int n,i,j,k,m,matched;
             }   
           }
           if(matched==0) {
-            if(networks_found == MAX_NETWORKS-1) {
-              if(logfile) logfile.close();
-              current_network=0;
-              display_network(current_network);
-              return;
-            }
+            if(networks_found == MAX_NETWORKS-1) networks_found=0;
             strcpy(networks[networks_found].bssid_str, WiFi.BSSIDstr(i).c_str());
             networks[networks_found].channel = WiFi.channel(i);
             k=strlen(WiFi.SSID(i).c_str());
@@ -178,10 +176,6 @@ int n,i,j,k,m,matched;
             networks[networks_found].rssi = WiFi.RSSI(i); 
             networks[networks_found].encryption = WiFi.encryptionType(i);
             networks[networks_found].network_number=networks_found;
-            Serial.printf("%d:\t%s %d %s %d %d\n",networks[networks_found].network_number, 
-              networks[networks_found].bssid_str,networks[networks_found].channel,
-              networks[networks_found].ssid,networks[networks_found].rssi,
-              networks[networks_found].encryption);
             if(logfile) {
               logfile.printf("%d,%s,%d,%s,%d,%d\n",networks[networks_found].network_number, 
               networks[networks_found].bssid_str,networks[networks_found].channel,
@@ -255,4 +249,17 @@ int stopB_button() {
         return 1;
       }
       return 0;
+}
+void dump_log() {
+      logfile=SD.open(outfile,FILE_READ);
+      if(logfile) {
+        M5.Lcd.clear();    
+        M5.Lcd.setCursor(5,90);
+        M5.Lcd.setTextColor(RED);
+        M5.Lcd.print("Dumping to serial");
+        while(logfile.available()) Serial.write(logfile.read());
+        logfile.close();
+        SD.remove(LOGFILE);
+      }
+      return;
 }
