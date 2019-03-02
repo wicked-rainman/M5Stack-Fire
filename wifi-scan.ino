@@ -1,3 +1,35 @@
+// ******************************************************************
+// Program: WiFi scanner
+// Platform: M5Stack (Fire)
+// Author: WR
+// Description:
+// Use the 2.4Ghz Wifi chip to scan for WiFi networks.
+// If SD card present, appends records to ./networks.txt.
+// After a reset, allows for ./networks.txt file to be output 
+// to Serial. File is then deleted.
+//
+// 1. For the first 1000 networks (Or until scanning is stopped
+//    AND the unit reset), networks with the same BSSID are
+//    deduped. RSSI is not updated for duplicates.
+// 2. If over 1000 network are found, counters are reset and
+//    recording continues untill the next 1000 networks have
+//    been found. There may be duplicates between each 1000
+//    record block.
+// 3. The option to dump the networks.txt file is only available
+//    when the unit is first turned on (This equates to no 
+//    networks found since last turned on - I.E Scan button
+//    not been pressed.
+// 4. If scanning is stoped, you can scroll through the list of
+//    found networks (Scroll goes down, then wraps back to the
+//    first record). 
+// 5. When scanning is dropped, the currently displayed network
+//    RSSI can be monitored by pressing the '+' button.
+// 6. Scanning is quite fast, but slows down as more networks 
+//    are found. This is because of the dedup process.
+//
+// ********************************************************************
+
+
 #include <WiFi.h>
 #include <M5Stack.h>
 #define MAX_NETWORKS 1300
@@ -252,14 +284,19 @@ int stopB_button() {
 }
 void dump_log() {
       logfile=SD.open(outfile,FILE_READ);
+      M5.Lcd.clear();    
+      M5.Lcd.setCursor(5,90);
+      M5.Lcd.setTextColor(RED);
       if(logfile) {
-        M5.Lcd.clear();    
-        M5.Lcd.setCursor(5,90);
-        M5.Lcd.setTextColor(RED);
         M5.Lcd.print("Dumping to serial");
         while(logfile.available()) Serial.write(logfile.read());
         logfile.close();
         SD.remove(LOGFILE);
       }
+      else {
+        M5.Lcd.print("No file present");
+        delay(2000);
+      }
       return;
 }
+
