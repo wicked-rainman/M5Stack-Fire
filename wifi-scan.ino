@@ -8,12 +8,12 @@
 // After a reset, allows for ./networks.txt file to be output 
 // to Serial. File is then deleted.
 //
-// 1. For the first 1000 networks (Or until scanning is stopped
+// 1. For the first MAX_NETS networks (Or until scanning is stopped
 //    AND the unit reset), networks with the same BSSID are
 //    deduped. RSSI is not updated for duplicates.
-// 2. If over 1000 network are found, counters are reset and
-//    recording continues untill the next 1000 networks have
-//    been found. There may be duplicates between each 1000
+// 2. If over MAX_NETS network are found, counters are reset and
+//    recording continues untill the next MAX_NETS networks have
+//    been found. There may be duplicates between each MAX_NETS
 //    record block.
 // 3. The option to dump the networks.txt file is only available
 //    when the unit is first turned on (This equates to no 
@@ -28,11 +28,9 @@
 //    are found. This is because of the dedup process.
 //
 // ********************************************************************
-
-
 #include <WiFi.h>
 #include <M5Stack.h>
-#define MAX_NETWORKS 1300
+#define MAX_NETS 200
 #define LOGFILE "/networks.txt"
 typedef struct {
     int channel;
@@ -42,13 +40,14 @@ typedef struct {
     int encryption;
     int network_number;
 } network;
-network networks[MAX_NETWORKS];
+network networks[MAX_NETS];
 char outfile[]=LOGFILE;
 int scan;
 int networks_found;
 int current_network;
+int network_total;
 File logfile;
-
+// SETUP------------------------------------------------------------
 void setup() {
   M5.begin();
   M5.Lcd.fillScreen(BLACK);
@@ -57,10 +56,11 @@ void setup() {
   WiFi.disconnect();
   networks_found=0;
   current_network=0;
+  network_total=0;
   draw_button_menu("   Scan            Dump",YELLOW);
   delay(100);
 }
-
+// LOOP ------------------------------------------------------------
 void loop() {
   M5.update();
   if(M5.BtnA.isPressed()) {
@@ -86,7 +86,7 @@ void loop() {
       M5.Lcd.clear();    
       M5.Lcd.setCursor(5,90);
       M5.Lcd.setTextColor(RED);
-      M5.Lcd.print("No Networks found");
+      M5.Lcd.print("Log dumped");
       draw_button_menu("   Scan",YELLOW);
 
     }
@@ -98,6 +98,9 @@ void loop() {
   }
   delay(200);
 }
+// DRAW_BUTTON_MENU ---------------------------------------------------------
+// Draw intended function just above the three buttons
+//---------------------------------------------------------------------------
 void draw_button_menu(char *button_str, int color) {
   M5.Lcd.drawLine(1,210,320,210,WHITE);  
   M5.Lcd.setTextSize(2);
@@ -105,7 +108,9 @@ void draw_button_menu(char *button_str, int color) {
   M5.Lcd.setCursor(5, 220);
   M5.Lcd.printf(button_str);
 }
-
+// DISPLAY_NETWORK------------------------------------------------------------
+// Display the captured details for the given network
+// ---------------------------------------------------------------------------
 void display_network(int net) {
   M5.Lcd.clear();
   draw_button_menu("   Scan   Scroll    +",YELLOW);
@@ -160,12 +165,14 @@ void display_network(int net) {
   M5.Lcd.setTextSize(2);
   return;
 }
-
+// DO_SCAN ----------------------------------------------------------------------
+// The scan thing. Do it. 
+// ------------------------------------------------------------------------------
 void do_scan() {
 int n,i,j,k,m,matched;
   logfile=SD.open(outfile,FILE_APPEND);
-  display_networks_found(networks_found,WHITE);
-  while(1) {
+  display_networks_found(network_total,WHITE);
+  while(1) { //Only exit point from this loop is to press button B.
       if(stopB_button()) {
         logfile.close();
         if(networks_found==0) {
@@ -189,6 +196,7 @@ int n,i,j,k,m,matched;
       if(n>0) {
         for (i = 0; i < n; ++i) {
           matched=0;
+          // If this network has been seen before, ignore it.
           for(j=0;j<networks_found;j++) {
             if(strcmp(WiFi.BSSIDstr(i).c_str() , networks[j].bssid_str) == 0) {
               matched=1;
@@ -196,10 +204,21 @@ int n,i,j,k,m,matched;
             }   
           }
           if(matched==0) {
-            if(networks_found == MAX_NETWORKS-1) networks_found=0;
+            
+            // If there's no more room in the array for network entries, zero
+            // the index out, and start overwriting values. This effectively
+            // starts another dedup for the next MAX_NETS count of entries.
+            // At this stage, you might get dups unless you're moving fast.
+            
+            if(networks_found == MAX_NETS-1) {
+              networks_found=0;
+              current_network=0;
+            }
             strcpy(networks[networks_found].bssid_str, WiFi.BSSIDstr(i).c_str());
             networks[networks_found].channel = WiFi.channel(i);
             k=strlen(WiFi.SSID(i).c_str());
+            // Screen is limited width. Chop the ssid if it's too long to fit.
+            // The full ssid get's written to the log file, so no biggie. 
             if(k>24) {
               memcpy(networks[networks_found].ssid,WiFi.SSID(i).c_str(),24);
               networks[networks_found].ssid[24]='\0';
@@ -211,17 +230,21 @@ int n,i,j,k,m,matched;
             if(logfile) {
               logfile.printf("%d,%s,%d,%s,%d,%d\n",networks[networks_found].network_number, 
               networks[networks_found].bssid_str,networks[networks_found].channel,
-              networks[networks_found].ssid,networks[networks_found].rssi,
+              WiFi.SSID().c_str(),networks[networks_found].rssi,
               networks[networks_found].encryption);
             }
-            display_networks_found(networks_found,WHITE);
+            display_networks_found(network_total,WHITE);
             networks_found++;
+            network_total++;
           }
         }
       }
     }
   }
 }
+// FOCUS_ON_NETWORK -------------------------------------------------------------
+// Scan, but only output the RSSI for the network identified by bssid
+// ------------------------------------------------------------------------------
 void focus_on_network(char *bssid) {
   int i,n;
   while(1) {
@@ -254,6 +277,9 @@ void focus_on_network(char *bssid) {
     }
   }
 }
+// DISPLAY_NETWORKS_FOUND ---------------------------------------------------------
+// Display number of networks found while the scan is running
+// --------------------------------------------------------------------------------
 void display_networks_found(int count, int colour) {
           M5.Lcd.clear();
           draw_button_menu("           Stop   ",RED);
@@ -268,6 +294,11 @@ void display_networks_found(int count, int colour) {
           M5.Lcd.printf("%d",count);
           M5.Lcd.setTextSize(2);
 }
+// stopB_button ---------------------------------------------------------------------
+// Pressing the stop button during a scan, halts the scan and transfers control
+// back to focus_on_network(). Debounce the button else won't start by showing the
+// first network, which would be somewhat annoying....
+// ----------------------------------------------------------------------------------
 int stopB_button() {
       M5.update();
       if(M5.BtnB.isPressed()) {
@@ -282,6 +313,9 @@ int stopB_button() {
       }
       return 0;
 }
+// DUMP_LOG --------------------------------------------------------------------------
+// That log thing. Dump it.
+// -----------------------------------------------------------------------------------
 void dump_log() {
       logfile=SD.open(outfile,FILE_READ);
       M5.Lcd.clear();    
@@ -299,4 +333,3 @@ void dump_log() {
       }
       return;
 }
-
