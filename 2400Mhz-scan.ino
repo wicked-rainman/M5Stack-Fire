@@ -1,6 +1,6 @@
 #include <WiFi.h>
 #include <M5Stack.h>
-#define MAX_NETS 200
+#define MAX_NETS 310
 #define LOGFILE "/networks.txt"
 typedef struct {
     int channel;
@@ -17,6 +17,7 @@ int scan;
 int networks_found;
 int current_network;
 int this_network;
+int wifi_networks;
 File logfile;
 
 void setup() {
@@ -27,15 +28,15 @@ void setup() {
   networks_found=0;
   current_network=0;
   this_network=0;
+  wifi_networks=0;
   M5.Lcd.clear();
   draw_box(0,0,319,200,GREEN);
+  M5.Lcd.drawLine(0,140,319,140,GREEN);
   M5.Lcd.drawLine(0,40,319,40,GREEN);
   M5.Lcd.setTextSize(2);
   if(SD.exists(LOGFILE)) draw_buttons("SCAN",WHITE," ",BLACK,"DUMP",WHITE,BLACK);
   else draw_buttons("SCAN",WHITE," ",BLACK," ",BLACK,BLACK);
-  update_screen("00:00:00:00:00;00","-------------------------","----",0,0,networks_found);
-
-
+  update_screen("00:00:00:00:00;00"," "," ",0,0,0,0);
 
 }
 
@@ -63,7 +64,8 @@ void loop() {
     }
     networks_found=0;
     current_network=0;
-    update_screen("00:00:00:00:00;00","-------------------------","----",0,0,networks_found);
+    wifi_networks=0;
+    update_screen("00:00:00:00:00;00"," "," ",0,0,0,0);
     draw_buttons("SCAN",WHITE," ",BLACK," ",BLACK,BLACK);
   }
   delay(100);
@@ -103,7 +105,7 @@ void show_individual_network() {
                         networks[this_network].encryption,
                         networks[this_network].rssi,
                         networks[this_network].channel,
-                        this_network);
+                        this_network,wifi_networks);
     }
     if(M5.BtnC.isPressed()) {
       draw_buttons("BACK",WHITE,"<<",WHITE,">>",RED,BLACK);
@@ -116,12 +118,12 @@ void show_individual_network() {
                         networks[this_network].encryption,
                         networks[this_network].rssi,
                         networks[this_network].channel,
-                        this_network);
+                        this_network,wifi_networks);
     }
   }
 }
 void do_scan() {
-  int n,i,j,k,matched;
+  int i,j,k,matched;
   logfile=SD.open(outfile,FILE_APPEND);
   while(1) {
     M5.update();
@@ -132,9 +134,9 @@ void do_scan() {
       logfile.close();
       return;
     }
-    n = WiFi.scanNetworks();
-    if(n>0) {
-      for (i = 0; i < n; ++i) {
+    wifi_networks = WiFi.scanNetworks();
+    if(wifi_networks>0) {
+      for (i = 0; i < wifi_networks; ++i) {
         matched=0;
         for(j=0;j<networks_found;j++) {
           if(strcmp(WiFi.BSSIDstr(i).c_str() , networks[j].bssid_str) == 0) {
@@ -162,15 +164,15 @@ void do_scan() {
               break;
             }
             case 2: {
-              strcpy(networks[networks_found].encryption,"WPA PSK TKIP");
+              strcpy(networks[networks_found].encryption,"WPA-PSK-TKIP");
               break;
             }
             case 3: {
-              strcpy(networks[networks_found].encryption,"WPA PSK CCMP");
+              strcpy(networks[networks_found].encryption,"WPA-PSK-CCMP");
               break;
             }
             case 4: {
-              strcpy(networks[networks_found].encryption,"WPA2 PSK Mixed CCMP");
+              strcpy(networks[networks_found].encryption,"WPA2-PSK-Mixed-CCMP");
               break;
             }
             case 5: {
@@ -178,7 +180,7 @@ void do_scan() {
               break;
             }
             case 8: {
-              strcpy(networks[networks_found].encryption,"WPA WPA2 PSK");
+              strcpy(networks[networks_found].encryption,"WPA-WPA2-PSK");
               break;
             }
             case 0: {
@@ -196,9 +198,9 @@ void do_scan() {
                         networks[networks_found].encryption,
                         networks[networks_found].rssi,
                         networks[networks_found].channel,
-                        networks_found);
+                        networks_found,wifi_networks);
           if(logfile) {
-              logfile.printf("%d,%s,%d,%s,%d,%d\n",networks[networks_found].network_number, 
+              logfile.printf("%d,%s,%d,%s,%d,%s\n",networks[networks_found].network_number, 
               networks[networks_found].bssid_str,networks[networks_found].channel,
               WiFi.SSID(i).c_str(),networks[networks_found].rssi,
               networks[networks_found].encryption);
@@ -209,11 +211,11 @@ void do_scan() {
   }
   }
 }
-void update_screen(char *mac, char *ssid, char *encryption, int rssi, int chan, int count) {
+void update_screen(char *mac, char *ssid, char *encryption, int rssi, int chan, int count, int nw_count) {
   M5.Lcd.setTextSize(2);
   M5.Lcd.setTextColor(YELLOW);
-  M5.Lcd.fillRect(60, 10, 220, 20, BLACK);
-  M5.Lcd.setCursor(60,13);
+  M5.Lcd.fillRect(8, 10, 210, 22, BLACK);
+  M5.Lcd.setCursor(10,13);
   M5.Lcd.print(mac);
   M5.Lcd.fillRect(10, 50, 300, 20, BLACK);
   M5.Lcd.setTextColor(GREEN);
@@ -228,11 +230,15 @@ void update_screen(char *mac, char *ssid, char *encryption, int rssi, int chan, 
   M5.Lcd.setCursor(130,110) ;  
   M5.Lcd.fillRect(190, 107, 70, 20, BLACK);
   M5.Lcd.printf("RSSI: %d",rssi);
-  M5.Lcd.setTextSize(3);
-  M5.Lcd.fillRect(240,168,70,26,BLACK);
-  M5.Lcd.setCursor(250,170);
+  M5.Lcd.fillRect(240,10,70,22,BLACK);
+  M5.Lcd.setCursor(265,13);
+  //M5.Lcd.setCursor(265,174);
   M5.Lcd.setTextColor(WHITE);
   M5.Lcd.printf("%3d",count);
+  M5.Lcd.fillRect(5,145,310,50,BLACK);
+  M5.Lcd.fillRect(5,145,count,50,GREEN);
+  M5.Lcd.fillRect(5,145,nw_count,50,RED);
+
 
 }
 
