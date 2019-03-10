@@ -123,7 +123,7 @@ void show_individual_network() {
   }
 }
 void do_scan() {
-  int i,j,k,matched;
+  int i,j,k,l,matched;
   logfile=SD.open(outfile,FILE_APPEND);
   while(1) {
     M5.update();
@@ -134,7 +134,13 @@ void do_scan() {
       logfile.close();
       return;
     }
-    wifi_networks = WiFi.scanNetworks();
+    wifi_networks = WiFi.scanNetworks(false,true,true,300);
+    l=WiFi.scanComplete();
+        while(l<=0) {
+          Serial.printf("%d %d\n",l, wifi_networks);
+          delay(1000);
+        }
+
     if(wifi_networks>0) {
       for (i = 0; i < wifi_networks; ++i) {
         matched=0;
@@ -271,24 +277,35 @@ void draw_box(int startx, int starty, int endx, int endy, int colour) {
 }
 
 void focus_on_network() {
-  int i,n;
+  int i,n,x;
   M5.Lcd.setTextColor(GREEN);
+  Serial.printf("This=%d %s %s\n",this_network, networks[this_network].bssid_str, networks[this_network].ssid);
+  //New start
+  //while(1) {
+  //  Serial.printf("RSSI=%d\n",WiFi.RSSI(this_network));
+  //  delay(1000);
+  //}
+  //New end
   while(1) {
       M5.update();
       if(M5.BtnA.isPressed()) {
         draw_buttons("BACK",RED," ",BLACK," ",BLACK,BLACK);
         while(M5.BtnA.isPressed()) M5.update();
         draw_buttons("SCAN",WHITE," ",BLACK,"DUMP",WHITE,BLACK);
+        //WiFi.disconnect();
         return;
       }
-      n = WiFi.scanNetworks();
+      n = WiFi.scanNetworks(false,true,true,100);
       if(n>0) {
         for (i = 0; i < n; ++i) {
           if(strcmp(networks[this_network].bssid_str, WiFi.BSSIDstr(i).c_str())==0) {
-            Serial.printf("%s, %d\n",WiFi.BSSIDstr(i).c_str(),WiFi.RSSI(i));
+            //Serial.printf("%s, %d\n",WiFi.BSSIDstr(i).c_str(),WiFi.RSSI(i));
             M5.Lcd.setCursor(130,110) ;  
             M5.Lcd.fillRect(190, 107, 70, 20, BLACK);
             M5.Lcd.printf("RSSI: %d",WiFi.RSSI(i));
+            x=(100+WiFi.RSSI(i))*3;
+            M5.Lcd.fillRect(x,145,(310-x),50,BLACK);
+            M5.Lcd.fillRect(5,145,x,50,WHITE);
           }
         }
       }
