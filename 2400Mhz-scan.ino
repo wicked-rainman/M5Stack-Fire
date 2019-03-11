@@ -290,6 +290,7 @@ void focus_on_network() {
       M5.update();
       if(M5.BtnA.isPressed()) {
         draw_buttons("BACK",RED," ",BLACK," ",BLACK,BLACK);
+        M5.Lcd.fillRect(5,145,310,50,BLACK);
         while(M5.BtnA.isPressed()) M5.update();
         draw_buttons("SCAN",WHITE," ",BLACK,"DUMP",WHITE,BLACK);
         //WiFi.disconnect();
