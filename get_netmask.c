@@ -1,3 +1,3 @@
-void get_network_mask(char * mask) {
+void get_netmask(char * mask) {
   strcpy(mask, WiFi.subnetMask().toString().c_str());
 }
