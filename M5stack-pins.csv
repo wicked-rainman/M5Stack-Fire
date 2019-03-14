@@ -1,0 +1,29 @@
+"ESP32 pin","Function","Fire use","M BUS","GPS MODULE"
+0,,,"G0",
+1,"TX","USB Serial CP2104","TXD0","RX (Clash)"
+2,,,"GPIO",
+3,"RX","USB Serial CP2104","RXD0","TX (Clash)"
+4,,"TFCARD_CS_PIN",,
+5,"SS?? GPIO",,"GPIO","RX"
+12,,,"IIS_SK",
+13,"IIS_WS",,"IIS_WS","TX"
+14,,"TFT_CS_PIN",,
+15,"GPIO","NeoPixel data pin","IISOUT",
+16,"RXD2 ","Used by PSRAM","RXD2","TX (Clash)"
+17,"TXD2","Used by PSRAM","TXD2","RX (Clash)"
+18,"SPI SCK  ","TFT-CLK_PIN","SCK",
+19,"SPI MISO","TFT_MISO_PIN","MISO",
+21,"I2C SDA  ",,"SDA",
+22,"I2C SCL"," ","SCL",
+23,"SPI MOSI ","TFT-MOSI_PIN","MOSI",
+25,"DAC1","Left DAC, Speaker pin","DAC/SPK",
+26,"DAC2","Right","DAC",
+27,,"TFT_DC_PIN",,
+32,,"TFT_LED_PIN",,
+33,,"TFT_RST_PIN",,
+34,,,"G34",
+35,"ADC1",,"ADC1",
+36,"ADC2",,"ADC2",
+37,"GPIO?","BtnC",,
+38,"GPIO?","BtnB",,
+39,"GPIO?","BtnA",,
