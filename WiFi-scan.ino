@@ -1,3 +1,4 @@
+#include <TinyGPS++.h>
 #include <WiFi.h>
 #include <M5Stack.h>
 #define MAX_NETS 310
@@ -19,12 +20,20 @@ int current_network;
 int this_network;
 int wifi_networks;
 File logfile;
+HardwareSerial ss(2);
+TinyGPSPlus gps;
 
+// Setup:
 void setup() {
   M5.begin();
   M5.Lcd.clear();
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
+  ss.begin(9600,SERIAL_8N1,13,5);
+  M5.Lcd.setTextSize(2);
+  M5.Lcd.setCursor(1,70);
+  M5.Lcd.print("WAITING FOR GPS");
+  get_gps_lock();
   networks_found=0;
   current_network=0;
   this_network=0;
@@ -81,7 +90,6 @@ void dump_log() {
       return;
 }
 
-
 void show_individual_network() {
   this_network=networks_found-1;
   draw_buttons("BACK",WHITE,"<<",WHITE,">>",WHITE,BLACK);
@@ -122,6 +130,7 @@ void show_individual_network() {
     }
   }
 }
+
 void do_scan() {
   int i,j,k,l,matched;
   logfile=SD.open(outfile,FILE_APPEND);
@@ -135,13 +144,8 @@ void do_scan() {
       return;
     }
     wifi_networks = WiFi.scanNetworks(false,true,true,300);
-    l=WiFi.scanComplete();
-        while(l<=0) {
-          Serial.printf("%d %d\n",l, wifi_networks);
-          delay(1000);
-        }
-
     if(wifi_networks>0) {
+      get_gps_lock();
       for (i = 0; i < wifi_networks; ++i) {
         matched=0;
         for(j=0;j<networks_found;j++) {
@@ -206,17 +210,45 @@ void do_scan() {
                         networks[networks_found].channel,
                         networks_found,wifi_networks);
           if(logfile) {
-              logfile.printf("%d,%s,%d,%s,%d,%s\n",networks[networks_found].network_number, 
-              networks[networks_found].bssid_str,networks[networks_found].channel,
-              WiFi.SSID(i).c_str(),networks[networks_found].rssi,
-              networks[networks_found].encryption);
+              logfile.printf("%d,%d/%d/%d-%d:%d:%d,%f,%f,%d,%s,%d,%s,%d,%s\n",
+                  networks_found,
+                  gps.date.day(),
+                  gps.date.month(),
+                  gps.date.year(),
+                  gps.time.hour(),
+                  gps.time.minute(),
+                  gps.time.second(),
+                  gps.location.lat(),
+                  gps.location.lng(),
+                  networks[networks_found].network_number, 
+                  networks[networks_found].bssid_str,
+                  networks[networks_found].channel,
+                  WiFi.SSID(i).c_str(),
+                  networks[networks_found].rssi,
+                  networks[networks_found].encryption);
           }
+          Serial.printf("%d,%d/%d/%d-%d:%d:%d,%f,%f,%s,%s,%s,%d,%d\n",
+                networks_found,
+                gps.date.day(),
+                gps.date.month(),
+                gps.date.year(),
+                gps.time.hour(),
+                gps.time.minute(),
+                gps.time.second(),
+                gps.location.lat(),
+                gps.location.lng(),
+                networks[networks_found].bssid_str,
+                networks[networks_found].ssid,
+                networks[networks_found].encryption,
+                networks[networks_found].rssi,
+                networks[networks_found].channel);
           networks_found++;
+        }
       }
     }
   }
-  }
 }
+
 void update_screen(char *mac, char *ssid, char *encryption, int rssi, int chan, int count, int nw_count) {
   M5.Lcd.setTextSize(2);
   M5.Lcd.setTextColor(YELLOW);
@@ -244,8 +276,6 @@ void update_screen(char *mac, char *ssid, char *encryption, int rssi, int chan, 
   M5.Lcd.fillRect(5,145,310,50,BLACK);
   M5.Lcd.fillRect(5,145,count,50,GREEN);
   M5.Lcd.fillRect(5,145,nw_count,50,RED);
-
-
 }
 
 void draw_buttons(char *btna, int cola, char* btnb, int colb, char* btnc, int colc, int border) {
@@ -303,5 +333,24 @@ void focus_on_network() {
           }
         }
       }
+    }
+}
+
+void get_gps_lock() {
+bool gps_loc=false, gps_date=false,gps_time=false;
+    while((gps_loc==false) || (gps_date==false) || (gps_time==false))  {
+        while(ss.available()>0) {
+            if(gps.encode(ss.read())) {
+                if(gps.location.isUpdated()) {
+                  gps_loc=true;
+                }
+                if(gps.date.isUpdated()) {
+                  gps_date=true;
+                }
+                if(gps.time.isUpdated()) {
+                  gps_time=true;
+                }
+            }
+        }
     }
 }
