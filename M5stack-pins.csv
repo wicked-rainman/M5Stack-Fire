@@ -1,5 +1,5 @@
 "ESP32 pin","Function","Fire use","M BUS","GPS MODULE"
-0,,,"G0",
+0,,"IIS_MK","G0",
 1,"TX","USB Serial CP2104","TXD0","RX (Clash)"
 2,,,"GPIO",
 3,"RX","USB Serial CP2104","RXD0","TX (Clash)"
