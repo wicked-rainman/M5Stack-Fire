@@ -1,5 +1,5 @@
 "ESP32 pin","Function","Fire use","M BUS","GPS MODULE"
-0,,"IIS_MK","G0",
+0,,,"IIS_MK",
 1,"TX","USB Serial CP2104","TXD0","RX (Clash)"
 2,,,"GPIO",
 3,"RX","USB Serial CP2104","RXD0","TX (Clash)"
@@ -21,7 +21,7 @@
 27,,"TFT_DC_PIN",,
 32,,"TFT_LED_PIN",,
 33,,"TFT_RST_PIN",,
-34,,"IIS_IN","G34",
+34,,,"IIS_IN",
 35,"ADC1",,"ADC1",
 36,"ADC2",,"ADC2",
 37,"GPIO?","BtnC",,
