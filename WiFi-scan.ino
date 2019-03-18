@@ -349,22 +349,6 @@ void do_scan() {
                   WiFi.SSID(i).c_str(),
                   networks[networks_found].rssi,
                   networks[networks_found].encryption);
-                  
-                Serial.printf("%d,%d/%d/%d-%d:%d:%d,%f,%f,%s,%s,%s,%d,%d\n",
-                  networks_found,
-                  gps.date.day(),
-                  gps.date.month(),
-                  gps.date.year(),
-                  gps.time.hour(),
-                  gps.time.minute(),
-                  gps.time.second(),
-                  gps.location.lat(),
-                  gps.location.lng(),
-                  networks[networks_found].bssid_str,
-                  networks[networks_found].ssid,
-                  networks[networks_found].encryption,
-                  networks[networks_found].rssi,
-                  networks[networks_found].channel);
             }
             else {
               logfile.printf("%d,%d,%s,%d,%s,%d,%s\n",
@@ -374,15 +358,7 @@ void do_scan() {
                   networks[networks_found].channel,
                   WiFi.SSID(i).c_str(),
                   networks[networks_found].rssi,
-                  networks[networks_found].encryption);
-                  
-                Serial.printf("%d,%s,%s,%s,%d,%d\n",
-                  networks_found,
-                  networks[networks_found].bssid_str,
-                  networks[networks_found].ssid,
-                  networks[networks_found].encryption,
-                  networks[networks_found].rssi,
-                  networks[networks_found].channel);
+                  networks[networks_found].encryption);;
             }
           }
           networks_found++;
