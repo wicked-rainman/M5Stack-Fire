@@ -1,7 +1,3 @@
-// **********************************************************************
-// M5Stack - Fire. WiFi scanner with GPS.
-// GPS attacked to pins 13 and 5.
-// **********************************************************************
 #include <TinyGPS++.h>
 #include <WiFi.h>
 #include <M5Stack.h>
@@ -23,6 +19,7 @@ int networks_found;
 int current_network;
 int this_network;
 int wifi_networks;
+int log_record_count=1;
 File logfile;
 HardwareSerial ss(2);
 TinyGPSPlus gps;
@@ -42,7 +39,7 @@ void setup() {
   wifi_networks=0;
   M5.Lcd.clear();
   // **********************************************************************
-  // Decide if GPS is going to be used 
+  // Decide if GPS is going to be used (Pins 13 and 5)
   // **********************************************************************
   draw_buttons("YES",WHITE,"NO",WHITE," ",BLACK,BLACK);
   M5.Lcd.setTextSize(3);
@@ -53,7 +50,7 @@ void setup() {
     M5.update();
     if(M5.BtnA.isPressed()) {
       // **********************************************************************
-      // GPS Fix wanted. Wait for a lock on. (Pins 13 and 5)
+      // GPS Fix wanted. Wait for a lock on.
       // **********************************************************************
       M5.Lcd.clear();
       draw_buttons("YES",RED," ",BLACK," ",BLACK,BLACK);
@@ -251,7 +248,6 @@ void do_scan() {
       // **********************************************************************
       // If GPS lock requried, get the lock.
       // **********************************************************************
-      if(use_gps) get_gps_lock();
       // **********************************************************************
       // Go through each found network and only add it if it's not been seen
       // before
@@ -333,7 +329,42 @@ void do_scan() {
           // **********************************************************************
           if(logfile) {
               if(use_gps) {
-                logfile.printf("%d,%d/%d/%d-%d:%d:%d,%f,%f,%d,%s,%d,%s,%d,%s\n",
+                get_gps_lock();
+                logfile.printf("<Placemark>\n");
+                logfile.printf("<name>%s</name>\n",WiFi.SSID(i).c_str());
+                logfile.printf("<description>\n<![CDATA[%s<p>%d/%d/%d %d:%d:%d<p>%s %dDb,%d ]]>\n</description>\n",
+                        networks[networks_found].bssid_str,
+                        gps.date.day(),
+                        gps.date.month(),
+                        gps.date.year(),
+                        gps.time.hour(),
+                        gps.time.minute(),
+                        gps.time.second(),
+                        networks[networks_found].encryption,
+                        networks[networks_found].rssi,
+                        networks[networks_found].channel);
+                logfile.printf("<Point id=\"%d\">\n<coordinates>%f,%f,0</coordinates>\n",log_record_count,gps.location.lng(),gps.location.lat());
+                log_record_count++;
+                logfile.printf("</Point>\n</Placemark>\n");
+                
+                //logfile.printf("%d,%d/%d/%d-%d:%d:%d,%f,%f,%d,%s,%d,%s,%d,%s\n",
+                //  networks_found,
+                //  gps.date.day(),
+                //  gps.date.month(),
+                //  gps.date.year(),
+                //  gps.time.hour(),
+                //  gps.time.minute(),
+                //  gps.time.second(),
+                //  gps.location.lat(),
+                //  gps.location.lng(),
+                //  networks[networks_found].network_number, 
+                //  networks[networks_found].bssid_str,
+                //  networks[networks_found].channel,
+                //  WiFi.SSID(i).c_str(),
+                //  networks[networks_found].rssi,
+                //  networks[networks_found].encryption);
+                  
+                Serial.printf("%d,%d/%d/%d-%d:%d:%d,%f,%f,%s,%s,%s,%d,%d\n",
                   networks_found,
                   gps.date.day(),
                   gps.date.month(),
@@ -343,12 +374,11 @@ void do_scan() {
                   gps.time.second(),
                   gps.location.lat(),
                   gps.location.lng(),
-                  networks[networks_found].network_number, 
                   networks[networks_found].bssid_str,
-                  networks[networks_found].channel,
-                  WiFi.SSID(i).c_str(),
+                  networks[networks_found].ssid,
+                  networks[networks_found].encryption,
                   networks[networks_found].rssi,
-                  networks[networks_found].encryption);
+                  networks[networks_found].channel);
             }
             else {
               logfile.printf("%d,%d,%s,%d,%s,%d,%s\n",
@@ -358,7 +388,15 @@ void do_scan() {
                   networks[networks_found].channel,
                   WiFi.SSID(i).c_str(),
                   networks[networks_found].rssi,
-                  networks[networks_found].encryption);;
+                  networks[networks_found].encryption);
+                  
+                Serial.printf("%d,%s,%s,%s,%d,%d\n",
+                  networks_found,
+                  networks[networks_found].bssid_str,
+                  networks[networks_found].ssid,
+                  networks[networks_found].encryption,
+                  networks[networks_found].rssi,
+                  networks[networks_found].channel);
             }
           }
           networks_found++;
